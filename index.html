@@ -1,553 +1,407 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Changelog Generator</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{
-  --bg:#0f0f13;--surface:#1a1a24;--surface2:#242436;--border:#2e2e44;
-  --text:#e4e4ef;--text2:#9494b8;--accent:#6c5ce7;--accent2:#a29bfe;
-  --green:#00b894;--orange:#fdcb6e;--red:#e17055;--blue:#74b9ff;
-  --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.3);
-}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
-a{color:var(--accent2);text-decoration:none}
+:root{--bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--accent:#58a6ff;--accent2:#388bfd;--green:#3fb950;--red:#f85149;--orange:#d29922;--purple:#bc8cff;--cyan:#39d2c0;--pink:#f778ba}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
 .container{max-width:1200px;margin:0 auto;padding:20px}
-header{text-align:center;padding:40px 0 30px;position:relative}
-header h1{font-size:2rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;display:inline-flex;align-items:center;gap:12px}
+header{text-align:center;padding:40px 0 30px}
+header h1{font-size:2rem;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 header p{color:var(--text2);margin-top:8px;font-size:.95rem}
-.badge{display:inline-block;background:var(--surface2);color:var(--accent2);font-size:.7rem;padding:2px 8px;border-radius:20px;margin-left:8px;vertical-align:middle}
-
-/* Layout */
-.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
-@media(max-width:900px){.main-grid{grid-template-columns:1fr}}
-
-/* Cards */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
-.card-title{font-size:1.1rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.card-title .icon{font-size:1.3rem}
-
-/* Form elements */
-textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:14px;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.85rem;resize:vertical;line-height:1.5;transition:border-color .2s}
-textarea:focus{outline:none;border-color:var(--accent)}
-.input-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.input-group{flex:1;min-width:140px}
-.input-group label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:6px;font-weight:500}
-select,input[type=text]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 12px;font-size:.9rem;transition:border-color .2s}
-select:focus,input:focus{outline:none;border-color:var(--accent)}
-
-/* Buttons */
+header a{color:var(--accent);text-decoration:none}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
+@media(max-width:768px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px}
+.panel-title{font-size:1.1rem;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+label{display:block;font-size:.85rem;color:var(--text2);margin-bottom:6px;font-weight:500}
+input,textarea,select{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;font-family:inherit;transition:border-color .2s}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical;min-height:120px}
+.row{display:flex;gap:12px;margin-bottom:16px}
+.row>div{flex:1}
+.hint{font-size:.75rem;color:var(--text2);margin-top:4px}
+.semver-hint{background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:16px;font-size:.8rem;line-height:1.8}
+.semver-hint span{display:inline-block;padding:2px 8px;border-radius:4px;font-weight:600;margin-right:4px}
+.semver-hint .major{background:rgba(248,81,73,.15);color:var(--red)}
+.semver-hint .minor{background:rgba(63,185,80,.15);color:var(--green)}
+.semver-hint .patch{background:rgba(88,166,255,.15);color:var(--accent)}
 .btn{padding:10px 20px;border:none;border-radius:8px;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:linear-gradient(135deg,var(--accent),#7c6cf0);color:#fff}
-.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(108,92,231,.4)}
-.btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
-.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
-.btn-secondary:hover{border-color:var(--accent);color:var(--accent2)}
-.btn-sm{padding:6px 14px;font-size:.8rem}
-.btn-danger{background:var(--red);color:#fff}
-.btn-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-
-/* API Key */
-.api-bar{display:flex;gap:12px;align-items:end;margin-bottom:20px;flex-wrap:wrap}
-.api-bar .input-group{flex:1;min-width:250px}
-.api-bar input[type=text]{font-family:monospace}
-.api-status{font-size:.75rem;padding:4px 10px;border-radius:20px;white-space:nowrap;align-self:center}
-.api-status.ok{background:rgba(0,184,148,.15);color:var(--green)}
-.api-status.no{background:rgba(225,112,85,.15);color:var(--red)}
-
-/* Output */
-.output-area{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:16px;min-height:200px;max-height:600px;overflow-y:auto;font-size:.9rem;white-space:pre-wrap;word-break:break-word;line-height:1.7}
-.output-area:empty::before{content:'生成的 Changelog 将显示在这里...';color:var(--text2);font-style:italic}
-.output-area h2{color:var(--accent2);margin:16px 0 8px;font-size:1.1rem}
-.output-area h3{color:var(--green);margin:12px 0 6px;font-size:.95rem}
-.output-area ul{padding-left:20px;margin:4px 0}
-.output-area li{margin:2px 0}
-
-/* Tabs */
-.tabs{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
-.tab{padding:8px 16px;font-size:.85rem;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-weight:500}
-.tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
-.tab:hover{color:var(--text)}
-.tab-content{display:none}
-.tab-content.active{display:block}
-
-/* Version History */
-.history-list{max-height:400px;overflow-y:auto}
-.history-item{display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:8px;margin-bottom:8px;transition:background .2s;cursor:pointer}
-.history-item:hover{background:var(--surface2)}
-.history-item .ver{font-weight:600;color:var(--accent2)}
-.history-item .date{font-size:.8rem;color:var(--text2)}
-.history-item .actions{display:flex;gap:6px}
-.history-empty{text-align:center;color:var(--text2);padding:40px;font-size:.9rem}
-
-/* Loading */
-.loading{display:none;align-items:center;gap:10px;padding:16px;color:var(--text2)}
-.loading.show{display:flex}
-.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* Toast */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 20px;box-shadow:var(--shadow);transform:translateY(100px);opacity:0;transition:all .3s;z-index:999;font-size:.9rem}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#2ea043}
+.btn-danger{background:rgba(248,81,73,.15);color:var(--red);border:1px solid rgba(248,81,73,.3)}.btn-danger:hover{background:rgba(248,81,73,.25)}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border)}.btn-outline:hover{background:var(--surface2)}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+.change-item{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:6px;cursor:grab;transition:all .2s;border:1px solid transparent}
+.change-item:hover{border-color:var(--border)}
+.change-item.dragging{opacity:.5;border-color:var(--accent)}
+.change-item .text{flex:1;font-size:.9rem}
+.change-item select{width:auto;padding:4px 8px;font-size:.8rem;border-radius:6px}
+.change-item .remove{background:none;border:none;color:var(--text2);cursor:pointer;font-size:1.1rem;padding:2px 6px;border-radius:4px}
+.change-item .remove:hover{color:var(--red);background:rgba(248,81,73,.1)}
+.drag-handle{color:var(--text2);cursor:grab;user-select:none}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.75rem;font-weight:600}
+.preview-area{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'SFMono-Regular',Consolas,monospace;font-size:.85rem;white-space:pre-wrap;word-break:break-word;max-height:600px;overflow-y:auto;line-height:1.7;color:var(--text2)}
+.version-entry{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.version-entry .info{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.version-entry .ver{font-weight:600;color:var(--accent)}
+.version-entry .date{color:var(--text2);font-size:.85rem}
+.version-entry .count{font-size:.8rem;color:var(--text2)}
+.version-entry .actions button{background:none;border:none;color:var(--text2);cursor:pointer;padding:4px 8px;border-radius:4px;font-size:.85rem}
+.version-entry .actions button:hover{background:var(--surface);color:var(--text)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;padding:12px 20px;border-radius:8px;font-size:.9rem;font-weight:500;transform:translateY(100px);opacity:0;transition:all .3s;z-index:999}
 .toast.show{transform:translateY(0);opacity:1}
-.toast.success{border-left:3px solid var(--green)}
-.toast.error{border-left:3px solid var(--red)}
-
-/* Semver badges */
-.semver-badge{display:inline-block;padding:2px 10px;border-radius:20px;font-size:.75rem;font-weight:600}
-.semver-major{background:rgba(225,112,85,.2);color:var(--red)}
-.semver-minor{background:rgba(253,203,110,.2);color:var(--orange)}
-.semver-patch{background:rgba(0,184,148,.2);color:var(--green)}
-
-/* Markdown raw */
-.md-raw{font-family:'SF Mono',Monaco,Consolas,monospace;font-size:.82rem;white-space:pre;line-height:1.5;color:var(--text2)}
-
-/* Release notes */
-.release-notes{line-height:1.8;font-size:.95rem}
-.release-notes h3{color:var(--accent2);margin:12px 0 6px}
-.release-notes ul{padding-left:20px}
-.release-notes li{margin:4px 0}
-
-/* Responsive */
-@media(max-width:600px){
-  .container{padding:12px}
-  header h1{font-size:1.5rem}
-  .card{padding:16px}
-  .input-row{flex-direction:column}
-  .api-bar{flex-direction:column}
-}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-state .emoji{font-size:2rem;margin-bottom:8px}
+.validation-error{border-color:var(--red)!important}
+.error-msg{color:var(--red);font-size:.75rem;margin-top:4px}
+footer{text-align:center;padding:40px 0 20px;color:var(--text2);font-size:.8rem}
+footer a{color:var(--accent);text-decoration:none}
 </style>
 </head>
 <body>
 <div class="container">
-  <header>
-    <h1>📋 AI Changelog Generator <span class="badge">MVP</span></h1>
-    <p>粘贴 Git Log → AI 生成结构化更新日志 | Powered by DeepSeek</p>
-  </header>
+<header>
+<h1>📋 AI Changelog Generator</h1>
+<p>Generate beautiful changelogs following <a href="https://keepachangelog.com" target="_blank">Keep a Changelog</a> format with <a href="https://semver.org" target="_blank">Semantic Versioning</a></p>
+</header>
 
-  <!-- API Key Bar -->
-  <div class="api-bar">
-    <div class="input-group">
-      <label>DeepSeek API Key</label>
-      <input type="text" id="apiKey" placeholder="sk-..." autocomplete="off">
-    </div>
-    <span id="apiStatus" class="api-status no">未配置</span>
-    <button class="btn btn-secondary btn-sm" onclick="saveApiKey()">保存</button>
-  </div>
-
-  <div class="main-grid">
-    <!-- Left: Input -->
-    <div class="card">
-      <div class="card-title"><span class="icon">📝</span> 输入</div>
-      <textarea id="commitInput" rows="12" placeholder="粘贴 git log 输出或 commit 列表，例如：
-
-feat: add user authentication module
-fix: resolve memory leak in data processing
-docs: update API documentation
-refactor: simplify database connection logic
-feat!: redesign dashboard layout (breaking change)
-chore: update dependencies
-fix: correct timezone handling in reports
-feat: add export to PDF feature
-deprecate: legacy API v1 endpoints
-security: patch XSS vulnerability in comments"></textarea>
-
-      <div class="input-row" style="margin-top:14px">
-        <div class="input-group">
-          <label>当前版本号</label>
-          <input type="text" id="currentVersion" placeholder="例如 1.2.3" value="">
-        </div>
-        <div class="input-group">
-          <label>输出语言</label>
-          <select id="outputLang">
-            <option value="zh">中文</option>
-            <option value="en">English</option>
-            <option value="both">中英双语</option>
-          </select>
-        </div>
-        <div class="input-group">
-          <label>项目名称（可选）</label>
-          <input type="text" id="projectName" placeholder="My Project">
-        </div>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn btn-primary" id="generateBtn" onclick="generate()">
-          ✨ 生成 Changelog
-        </button>
-        <button class="btn btn-secondary" onclick="generateReleaseNotes()">
-          📢 生成发布说明
-        </button>
-        <button class="btn btn-secondary" onclick="clearInput()">清空</button>
-      </div>
-
-      <div class="loading" id="loading">
-        <div class="spinner"></div>
-        <span id="loadingText">AI 正在分析 commits...</span>
-      </div>
-    </div>
-
-    <!-- Right: Output -->
-    <div class="card">
-      <div class="card-title"><span class="icon">📄</span> 输出</div>
-
-      <div class="tabs">
-        <button class="tab active" onclick="switchTab('preview')">预览</button>
-        <button class="tab" onclick="switchTab('markdown')">Markdown</button>
-        <button class="tab" onclick="switchTab('release')">发布说明</button>
-      </div>
-
-      <div id="tab-preview" class="tab-content active">
-        <div class="output-area" id="previewOutput"></div>
-      </div>
-      <div id="tab-markdown" class="tab-content">
-        <div class="output-area md-raw" id="markdownOutput"></div>
-      </div>
-      <div id="tab-release" class="tab-content">
-        <div class="output-area release-notes" id="releaseOutput"></div>
-      </div>
-
-      <div class="btn-group">
-        <button class="btn btn-secondary btn-sm" onclick="copyMarkdown()">📋 复制 Markdown</button>
-        <button class="btn btn-secondary btn-sm" onclick="exportFile()">💾 导出文件</button>
-        <button class="btn btn-secondary btn-sm" onclick="saveToHistory()">📌 保存到历史</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- History -->
-  <div class="card" style="margin-top:24px">
-    <div class="card-title"><span class="icon">🕐</span> 历史版本</div>
-    <div id="historyList" class="history-list">
-      <div class="history-empty">暂无历史记录，生成 Changelog 后可保存到这里</div>
-    </div>
-  </div>
+<div class="semver-hint">
+<span class="major">MAJOR</span> Breaking changes (incompatible API changes) &nbsp;
+<span class="minor">MINOR</span> New features (backwards compatible) &nbsp;
+<span class="patch">PATCH</span> Bug fixes (backwards compatible)
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- Saved versions list -->
+<div id="versionsList"></div>
+
+<div class="layout">
+<!-- Left: Input -->
+<div>
+<div class="panel">
+<div class="panel-title">✏️ New Version Entry</div>
+<div class="row">
+<div>
+<label for="version">Version Number</label>
+<input type="text" id="version" placeholder="e.g. 1.2.0" autocomplete="off">
+<div class="hint">Format: MAJOR.MINOR.PATCH</div>
+<div id="versionError" class="error-msg" style="display:none"></div>
+</div>
+<div>
+<label for="date">Release Date</label>
+<input type="date" id="date">
+</div>
+</div>
+
+<div>
+<label for="changes">Changes (one per line)</label>
+<textarea id="changes" placeholder="Add user authentication&#10;Fix login page crash&#10;Remove legacy API endpoints&#10;Update dashboard layout&#10;Deprecate old auth method&#10;Fix SQL injection vulnerability"></textarea>
+<div class="hint">AI will auto-classify, or you can manually adjust categories below</div>
+</div>
+
+<div class="btn-group">
+<button class="btn btn-primary" onclick="parseChanges()">🤖 Auto-Classify</button>
+<button class="btn btn-outline" onclick="clearForm()">Clear</button>
+</div>
+
+<div id="changeItems" style="margin-top:16px"></div>
+
+<div class="btn-group" id="addVersionBtn" style="display:none">
+<button class="btn btn-success" onclick="addVersion()">➕ Add Version</button>
+</div>
+</div>
+</div>
+
+<!-- Right: Preview -->
+<div>
+<div class="panel">
+<div class="panel-title">👁️ Live Preview</div>
+<div id="preview" class="preview-area">
+<div class="empty-state">
+<div class="emoji">📝</div>
+<p>Your changelog preview will appear here</p>
+</div>
+</div>
+<div class="btn-group">
+<button class="btn btn-primary" onclick="copyMarkdown()">📋 Copy Markdown</button>
+<button class="btn btn-success" onclick="downloadFile()">💾 Download CHANGELOG.md</button>
+<button class="btn btn-danger" onclick="clearAll()">🗑️ Clear All</button>
+</div>
+</div>
+</div>
+</div>
+
+<footer>
+<p>Built with ❤️ &mdash; Following <a href="https://keepachangelog.com" target="_blank">Keep a Changelog</a> &amp; <a href="https://semver.org" target="_blank">Semantic Versioning</a></p>
+</footer>
+</div>
+
+<div id="toast" class="toast"></div>
 
 <script>
-// ===== State =====
-let state = {
-  markdown: '',
-  releaseNotes: '',
-  html: '',
-  history: JSON.parse(localStorage.getItem('changelog_history') || '[]'),
-  apiKey: localStorage.getItem('deepseek_api_key') || ''
+const CATEGORIES = ['Added','Changed','Deprecated','Removed','Fixed','Security'];
+const CAT_COLORS = {Added:'#3fb950',Changed:'#d29922',Deprecated:'#bc8cff',Removed:'#f85149',Fixed:'#58a6ff',Security:'#39d2c0'};
+
+// Keyword-based auto-classification
+const CAT_KEYWORDS = {
+  Added: ['add','new','create','introduce','implement','support','include','enable'],
+  Changed: ['change','update','modify','refactor','improve','enhance','adjust','rename','move','migrate','upgrade','redesign'],
+  Deprecated: ['deprecat'],
+  Removed: ['remove','delete','drop','eliminate','clean up','strip'],
+  Fixed: ['fix','bug','patch','resolve','correct','repair','hotfix','issue','crash','error'],
+  Security: ['security','vulnerab','cve','auth','permission','xss','csrf','inject','sanitiz','encrypt']
 };
 
-// ===== Init =====
-document.addEventListener('DOMContentLoaded', () => {
-  if (state.apiKey) {
-    document.getElementById('apiKey').value = state.apiKey;
-    updateApiStatus(true);
+let versions = [];
+let currentChanges = [];
+let dragIdx = null;
+
+// Init date to today
+document.getElementById('date').valueAsDate = new Date();
+
+// Version validation
+document.getElementById('version').addEventListener('input', function() {
+  const val = this.value.trim();
+  const err = document.getElementById('versionError');
+  if (val && !/^\d+\.\d+\.\d+(-[\w.]+)?(\+[\w.]+)?$/.test(val)) {
+    this.classList.add('validation-error');
+    err.textContent = 'Invalid semver format. Use MAJOR.MINOR.PATCH';
+    err.style.display = 'block';
+  } else {
+    this.classList.remove('validation-error');
+    err.style.display = 'none';
   }
-  renderHistory();
 });
 
-// ===== API Key =====
-function saveApiKey() {
-  const key = document.getElementById('apiKey').value.trim();
-  if (!key) { toast('请输入 API Key', 'error'); return; }
-  state.apiKey = key;
-  localStorage.setItem('deepseek_api_key', key);
-  updateApiStatus(true);
-  toast('API Key 已保存', 'success');
-}
-
-function updateApiStatus(ok) {
-  const el = document.getElementById('apiStatus');
-  el.className = 'api-status ' + (ok ? 'ok' : 'no');
-  el.textContent = ok ? '已配置 ✓' : '未配置';
-}
-
-// ===== DeepSeek API =====
-async function callDeepSeek(systemPrompt, userPrompt) {
-  if (!state.apiKey) throw new Error('请先配置 DeepSeek API Key');
-
-  const res = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${state.apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'deepseek-chat',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      temperature: 0.3,
-      max_tokens: 4096
-    })
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error?.message || `API 错误: ${res.status}`);
+function classify(text) {
+  const lower = text.toLowerCase();
+  for (const [cat, keywords] of Object.entries(CAT_KEYWORDS)) {
+    for (const kw of keywords) {
+      if (lower.includes(kw)) return cat;
+    }
   }
-
-  const data = await res.json();
-  return data.choices[0].message.content;
+  return 'Changed';
 }
 
-// ===== Generate Changelog =====
-async function generate() {
-  const commits = document.getElementById('commitInput').value.trim();
-  if (!commits) { toast('请输入 commit 列表', 'error'); return; }
-
-  const lang = document.getElementById('outputLang').value;
-  const version = document.getElementById('currentVersion').value.trim();
-  const project = document.getElementById('projectName').value.trim();
-
-  const langInstr = {
-    zh: '用中文输出。',
-    en: 'Output in English.',
-    both: '同时输出中文和英文版本，先中文后英文，用 --- 分隔。'
-  }[lang];
-
-  const systemPrompt = `你是一个专业的 Changelog 生成器。严格遵循 Keep a Changelog (https://keepachangelog.com) 格式。
-
-规则：
-1. 分析每条 commit，归类到以下类别：Added, Changed, Deprecated, Removed, Fixed, Security
-2. 合并相似的 commit，用清晰简洁的语言重写
-3. 根据变更内容建议语义化版本号（semver）：
-   - MAJOR: 有破坏性变更（breaking changes）
-   - MINOR: 新增功能（features）
-   - PATCH: 修复 bug、文档更新等
-4. ${langInstr}
-5. 只输出 Markdown 格式的 changelog，不要额外解释
-
-格式示例：
-# Changelog
-
-## [版本号] - 日期
-
-### Added
-- 新增的功能
-
-### Changed
-- 变更的功能
-
-### Fixed
-- 修复的问题`;
-
-  let userMsg = `请分析以下 commits 并生成 changelog：\n\n${commits}`;
-  if (version) userMsg += `\n\n当前版本号: ${version}（请基于此建议新版本号）`;
-  if (project) userMsg += `\n项目名称: ${project}`;
-
-  setLoading(true, 'AI 正在分析 commits...');
-  try {
-    const md = await callDeepSeek(systemPrompt, userMsg);
-    state.markdown = md;
-    state.html = markdownToHtml(md);
-    document.getElementById('previewOutput').innerHTML = state.html;
-    document.getElementById('markdownOutput').textContent = md;
-    switchTab('preview');
-    toast('Changelog 生成成功！', 'success');
-  } catch (e) {
-    toast(e.message, 'error');
-  } finally {
-    setLoading(false);
-  }
+function parseChanges() {
+  const raw = document.getElementById('changes').value.trim();
+  if (!raw) return;
+  const lines = raw.split('\n').map(l => l.replace(/^[-*•]\s*/, '').trim()).filter(Boolean);
+  currentChanges = lines.map(text => ({ text, category: classify(text) }));
+  renderChangeItems();
+  document.getElementById('addVersionBtn').style.display = 'flex';
 }
 
-// ===== Generate Release Notes =====
-async function generateReleaseNotes() {
-  const commits = document.getElementById('commitInput').value.trim();
-  if (!commits && !state.markdown) { toast('请先输入 commits 或生成 changelog', 'error'); return; }
-
-  const lang = document.getElementById('outputLang').value;
-  const project = document.getElementById('projectName').value.trim() || '本项目';
-
-  const langInstr = {
-    zh: '用中文输出。',
-    en: 'Output in English.',
-    both: '同时输出中文和英文版本，先中文后英文，用 --- 分隔。'
-  }[lang];
-
-  const systemPrompt = `你是一个产品经理，擅长将技术变更转化为用户友好的发布说明。
-
-规则：
-1. 面向非技术用户，避免技术术语
-2. 突出用户能感知到的改进和新功能
-3. 用积极正面的语气
-4. 简洁明了，使用 emoji 增加可读性
-5. ${langInstr}
-6. 输出 Markdown 格式`;
-
-  const source = state.markdown || commits;
-  const userMsg = `请将以下技术变更转化为用户友好的发布说明：\n\n项目：${project}\n\n${source}`;
-
-  setLoading(true, 'AI 正在生成发布说明...');
-  try {
-    const notes = await callDeepSeek(systemPrompt, userMsg);
-    state.releaseNotes = notes;
-    document.getElementById('releaseOutput').innerHTML = markdownToHtml(notes);
-    switchTab('release');
-    toast('发布说明生成成功！', 'success');
-  } catch (e) {
-    toast(e.message, 'error');
-  } finally {
-    setLoading(false);
-  }
-}
-
-// ===== Simple Markdown to HTML =====
-function markdownToHtml(md) {
-  if (!md) return '';
-  let html = md
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size:1.3rem;color:var(--accent2)">$1</h1>')
-    // Bold & italic
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    // Code
-    .replace(/`(.+?)`/g, '<code style="background:var(--surface);padding:1px 5px;border-radius:3px;font-size:.85em">$1</code>')
-    // List items
-    .replace(/^- (.+)$/gm, '<li>$1</li>')
-    // Horizontal rule
-    .replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:16px 0">')
-    // Line breaks
-    .replace(/\n/g, '\n');
-
-  // Wrap consecutive <li> in <ul>
-  html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-  // Paragraphs for remaining text
-  html = html.replace(/^(?!<[hul1-9lr])((?!<).+)$/gm, '<p>$1</p>');
-
-  return html;
-}
-
-// ===== Tabs =====
-function switchTab(name) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelector(`.tab-content#tab-${name}`).classList.add('active');
-  // Find tab button by text mapping
-  const map = { preview: '预览', markdown: 'Markdown', release: '发布说明' };
-  document.querySelectorAll('.tab').forEach(t => {
-    if (t.textContent.trim() === map[name]) t.classList.add('active');
-  });
-}
-
-// ===== History =====
-function saveToHistory() {
-  if (!state.markdown) { toast('没有可保存的内容', 'error'); return; }
-
-  const versionMatch = state.markdown.match(/##\s*\[([^\]]+)\]/);
-  const version = versionMatch ? versionMatch[1] : document.getElementById('currentVersion').value || 'Unknown';
-  const project = document.getElementById('projectName').value.trim() || 'Untitled';
-
-  const entry = {
-    id: Date.now(),
-    version,
-    project,
-    date: new Date().toISOString().split('T')[0],
-    markdown: state.markdown,
-    releaseNotes: state.releaseNotes,
-    html: state.html
-  };
-
-  state.history.unshift(entry);
-  if (state.history.length > 50) state.history.pop();
-  localStorage.setItem('changelog_history', JSON.stringify(state.history));
-  renderHistory();
-  toast('已保存到历史记录', 'success');
-}
-
-function renderHistory() {
-  const el = document.getElementById('historyList');
-  if (!state.history.length) {
-    el.innerHTML = '<div class="history-empty">暂无历史记录，生成 Changelog 后可保存到这里</div>';
-    return;
-  }
-  el.innerHTML = state.history.map(h => `
-    <div class="history-item" onclick="loadHistory(${h.id})">
-      <div>
-        <span class="ver">${esc(h.project)} v${esc(h.version)}</span>
-        <span class="date">${h.date}</span>
-      </div>
-      <div class="actions">
-        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();loadHistory(${h.id})">加载</button>
-        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteHistory(${h.id})">删除</button>
-      </div>
+function renderChangeItems() {
+  const container = document.getElementById('changeItems');
+  container.innerHTML = currentChanges.map((c, i) => `
+    <div class="change-item" draggable="true" data-idx="${i}"
+      ondragstart="onDragStart(event,${i})" ondragover="onDragOver(event)" ondrop="onDrop(event,${i})" ondragend="onDragEnd()">
+      <span class="drag-handle">⠿</span>
+      <select onchange="updateCategory(${i},this.value)" aria-label="Category for change ${i+1}">
+        ${CATEGORIES.map(cat => `<option value="${cat}" ${cat===c.category?'selected':''}>${cat}</option>`).join('')}
+      </select>
+      <span class="text">${escHtml(c.text)}</span>
+      <button class="remove" onclick="removeChange(${i})" aria-label="Remove change">&times;</button>
     </div>
   `).join('');
+  updatePreview();
 }
 
-function loadHistory(id) {
-  const entry = state.history.find(h => h.id === id);
-  if (!entry) return;
-  state.markdown = entry.markdown;
-  state.html = entry.html || markdownToHtml(entry.markdown);
-  state.releaseNotes = entry.releaseNotes || '';
-  document.getElementById('previewOutput').innerHTML = state.html;
-  document.getElementById('markdownOutput').textContent = state.markdown;
-  document.getElementById('releaseOutput').innerHTML = markdownToHtml(state.releaseNotes);
-  toast(`已加载 ${entry.project} v${entry.version}`, 'success');
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+function updateCategory(i, cat) { currentChanges[i].category = cat; updatePreview(); }
+function removeChange(i) { currentChanges.splice(i, 1); renderChangeItems(); }
+
+// Drag and drop
+function onDragStart(e, i) { dragIdx = i; e.currentTarget.classList.add('dragging'); }
+function onDragOver(e) { e.preventDefault(); }
+function onDrop(e, i) {
+  e.preventDefault();
+  if (dragIdx === null || dragIdx === i) return;
+  const item = currentChanges.splice(dragIdx, 1)[0];
+  currentChanges.splice(i, 0, item);
+  dragIdx = null;
+  renderChangeItems();
+}
+function onDragEnd() { dragIdx = null; document.querySelectorAll('.change-item').forEach(el => el.classList.remove('dragging')); }
+
+function addVersion() {
+  const ver = document.getElementById('version').value.trim();
+  const date = document.getElementById('date').value;
+  if (!ver) { showToast('Please enter a version number', true); return; }
+  if (!/^\d+\.\d+\.\d+(-[\w.]+)?(\+[\w.]+)?$/.test(ver)) { showToast('Invalid version format', true); return; }
+  if (!currentChanges.length) { showToast('Please add some changes first', true); return; }
+  if (versions.find(v => v.version === ver)) { showToast('Version already exists', true); return; }
+
+  versions.push({ version: ver, date: date, changes: [...currentChanges] });
+  versions.sort((a, b) => compareSemver(b.version, a.version));
+  currentChanges = [];
+  document.getElementById('changes').value = '';
+  document.getElementById('version').value = '';
+  document.getElementById('date').valueAsDate = new Date();
+  document.getElementById('changeItems').innerHTML = '';
+  document.getElementById('addVersionBtn').style.display = 'none';
+  renderVersionsList();
+  updatePreview();
+  showToast('Version ' + ver + ' added!');
 }
 
-function deleteHistory(id) {
-  state.history = state.history.filter(h => h.id !== id);
-  localStorage.setItem('changelog_history', JSON.stringify(state.history));
-  renderHistory();
-  toast('已删除', 'success');
+function compareSemver(a, b) {
+  const pa = a.split(/[-+]/)[0].split('.').map(Number);
+  const pb = b.split(/[-+]/)[0].split('.').map(Number);
+  for (let i = 0; i < 3; i++) { if (pa[i] !== pb[i]) return pa[i] - pb[i]; }
+  return 0;
 }
 
-// ===== Export =====
+function renderVersionsList() {
+  const el = document.getElementById('versionsList');
+  if (!versions.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div style="margin-bottom:16px">' + versions.map((v, i) => `
+    <div class="version-entry">
+      <div class="info">
+        <span class="ver">${escHtml(v.version)}</span>
+        <span class="date">${v.date}</span>
+        <span class="count">${v.changes.length} change${v.changes.length>1?'s':''}</span>
+      </div>
+      <div class="actions">
+        <button onclick="editVersion(${i})" title="Edit">✏️</button>
+        <button onclick="removeVersion(${i})" title="Delete">🗑️</button>
+      </div>
+    </div>
+  `).join('') + '</div>';
+}
+
+function editVersion(i) {
+  const v = versions[i];
+  document.getElementById('version').value = v.version;
+  document.getElementById('date').value = v.date;
+  currentChanges = [...v.changes];
+  renderChangeItems();
+  document.getElementById('addVersionBtn').style.display = 'flex';
+  versions.splice(i, 1);
+  renderVersionsList();
+  updatePreview();
+  window.scrollTo({ top: document.querySelector('.layout').offsetTop, behavior: 'smooth' });
+}
+
+function removeVersion(i) {
+  versions.splice(i, 1);
+  renderVersionsList();
+  updatePreview();
+}
+
+function generateMarkdown() {
+  let allVersions = [...versions];
+  // Include current working changes if any
+  const ver = document.getElementById('version').value.trim();
+  const date = document.getElementById('date').value;
+  if (ver && currentChanges.length && /^\d+\.\d+\.\d+/.test(ver)) {
+    allVersions.push({ version: ver, date: date, changes: [...currentChanges] });
+    allVersions.sort((a, b) => compareSemver(b.version, a.version));
+  }
+  if (!allVersions.length) return '';
+
+  let md = '# Changelog\n\nAll notable changes to this project will be documented in this file.\n\nThe format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),\nand this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).\n';
+
+  for (const v of allVersions) {
+    md += `\n## [${v.version}] - ${v.date}\n`;
+    const grouped = {};
+    for (const c of v.changes) {
+      if (!grouped[c.category]) grouped[c.category] = [];
+      grouped[c.category].push(c.text);
+    }
+    for (const cat of CATEGORIES) {
+      if (grouped[cat] && grouped[cat].length) {
+        md += `\n### ${cat}\n\n`;
+        for (const t of grouped[cat]) {
+          md += `- ${t}\n`;
+        }
+      }
+    }
+  }
+  return md;
+}
+
+function updatePreview() {
+  const md = generateMarkdown();
+  const el = document.getElementById('preview');
+  if (!md) {
+    el.innerHTML = '<div class="empty-state"><div class="emoji">📝</div><p>Your changelog preview will appear here</p></div>';
+    return;
+  }
+  // Simple markdown rendering
+  const html = md.split('\n').map(line => {
+    if (line.startsWith('# ')) return `<span style="font-size:1.3rem;color:var(--text);font-weight:700">${escHtml(line.slice(2))}</span>`;
+    if (line.startsWith('## ')) return `<span style="font-size:1.1rem;color:var(--text);font-weight:600;margin-top:8px;display:inline-block">${escHtml(line.slice(3))}</span>`;
+    if (line.startsWith('### ')) {
+      const cat = line.slice(4).trim();
+      const color = CAT_COLORS[cat] || 'var(--accent)';
+      return `<span style="font-size:.95rem;color:${color};font-weight:600;margin-top:4px;display:inline-block">${escHtml(line.slice(4))}</span>`;
+    }
+    if (line.startsWith('- ')) return `<span style="padding-left:16px;display:inline-block">• ${escHtml(line.slice(2))}</span>`;
+    if (line.includes('[Keep a Changelog]')) return `<span style="color:var(--text2)">${escHtml(line)}</span>`;
+    if (line.includes('[Semantic Versioning]')) return `<span style="color:var(--text2)">${escHtml(line)}</span>`;
+    return escHtml(line);
+  }).join('\n');
+  el.innerHTML = html;
+}
+
 function copyMarkdown() {
-  if (!state.markdown) { toast('没有可复制的内容', 'error'); return; }
-  navigator.clipboard.writeText(state.markdown).then(() => toast('已复制到剪贴板', 'success'));
+  const md = generateMarkdown();
+  if (!md) { showToast('Nothing to copy', true); return; }
+  navigator.clipboard.writeText(md).then(() => showToast('Copied to clipboard!')).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = md; document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showToast('Copied to clipboard!');
+  });
 }
 
-function exportFile() {
-  if (!state.markdown) { toast('没有可导出的内容', 'error'); return; }
-  const blob = new Blob([state.markdown], { type: 'text/markdown' });
-  const url = URL.createObjectURL(blob);
+function downloadFile() {
+  const md = generateMarkdown();
+  if (!md) { showToast('Nothing to download', true); return; }
+  const blob = new Blob([md], { type: 'text/markdown' });
   const a = document.createElement('a');
-  a.href = url;
-  const project = document.getElementById('projectName').value.trim() || 'CHANGELOG';
-  a.download = `${project}-changelog.md`;
+  a.href = URL.createObjectURL(blob);
+  a.download = 'CHANGELOG.md';
   a.click();
-  URL.revokeObjectURL(url);
-  toast('文件已下载', 'success');
+  URL.revokeObjectURL(a.href);
+  showToast('Downloaded CHANGELOG.md!');
 }
 
-// ===== Utilities =====
-function setLoading(show, text) {
-  const el = document.getElementById('loading');
-  el.classList.toggle('show', show);
-  if (text) document.getElementById('loadingText').textContent = text;
-  document.getElementById('generateBtn').disabled = show;
+function clearForm() {
+  document.getElementById('version').value = '';
+  document.getElementById('date').valueAsDate = new Date();
+  document.getElementById('changes').value = '';
+  document.getElementById('changeItems').innerHTML = '';
+  document.getElementById('addVersionBtn').style.display = 'none';
+  currentChanges = [];
+  updatePreview();
 }
 
-function clearInput() {
-  document.getElementById('commitInput').value = '';
-  document.getElementById('currentVersion').value = '';
-  document.getElementById('projectName').value = '';
+function clearAll() {
+  if (!confirm('Clear all versions and changes?')) return;
+  versions = [];
+  currentChanges = [];
+  clearForm();
+  renderVersionsList();
+  updatePreview();
 }
 
-function toast(msg, type = 'success') {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.className = `toast ${type} show`;
-  setTimeout(() => el.classList.remove('show'), 3000);
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s;
-  return d.innerHTML;
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = isError ? 'var(--red)' : 'var(--green)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 </script>
-<!-- MONETIZE:START -->
-<script src="monetize.js"></script>
-<!-- MONETIZE:END -->
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="130747" async data-cfasync="false"></script>
 </body>
 </html>
